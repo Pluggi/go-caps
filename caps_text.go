@@ -24,8 +24,10 @@ func FromText(text string) (*Cap, error) {
 	return create(c_cap), nil
 }
 
-// ToText() returns a human-readable capability set.
-func (c Cap) ToText() (string, error) {
+// Returns a human-readable string of the capability set.
+//
+// Equivalent to cap_to_text(cap_t, ssize_t)
+func (c Cap) String() (string, error) {
 	text, err := C.cap_to_text(c.c, nil)
 	defer C.cap_free(unsafe.Pointer(text))
 
