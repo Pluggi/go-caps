@@ -10,6 +10,8 @@ import (
 	"unsafe"
 )
 
+// FromText() returns a capability set reflecting the state represented by a
+// human-readable capability set.
 func FromText(text string) (*Cap, error) {
 	cText := C.CString(text)
 	defer C.free(unsafe.Pointer(cText))
@@ -22,6 +24,7 @@ func FromText(text string) (*Cap, error) {
 	return create(c_cap), nil
 }
 
+// ToText() returns a human-readable capability set.
 func (c Cap) ToText() (string, error) {
 	text, err := C.cap_to_text(c.c, nil)
 	defer C.cap_free(unsafe.Pointer(text))
@@ -33,6 +36,8 @@ func (c Cap) ToText() (string, error) {
 	return C.GoString(text), nil
 }
 
+// FromName() converts a text representation of a capability, such as
+// "cap_chown", to a CapValue.
 func FromName(name string) (CapValue, error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
@@ -46,7 +51,8 @@ func FromName(name string) (CapValue, error) {
 	return CapValue(value), nil
 }
 
-func ToName(value CapValue) string {
+// ToName() converts a capability index value to a string.
+func (value CapValue) ToName() string {
 	var s = C.cap_to_name(C.cap_value_t(value))
 	C.cap_free(unsafe.Pointer(s))
 

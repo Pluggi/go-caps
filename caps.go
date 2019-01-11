@@ -10,13 +10,15 @@ import (
 	"unsafe"
 )
 
-// Generated using
-// awk '$1 == "#define" &&   \
-//      $2 ~ /^CAP_\w+$/ &&  \
-//      $2 != "CAP_LAST_CAP" \
-//      { printf("%-20s%s= CapValue(C.%s)\n", $2, " ", $2) }' /usr/include/linux/capability.h
+// Equivalent of cap_value_t
 type CapValue int
 
+// Generated using
+//    awk '$1 == "#define" &&                                    \
+//         $2 ~ /^CAP_\w+$/ &&                                   \
+//         $2 != "CAP_LAST_CAP"                                  \
+//         { printf("%-20s%s= CapValue(C.%s)\n", $2, " ", $2) }' \
+//         /usr/include/linux/capability.h
 const (
 	CAP_CHOWN            = CapValue(C.CAP_CHOWN)
 	CAP_DAC_OVERRIDE     = CapValue(C.CAP_DAC_OVERRIDE)
@@ -58,14 +60,16 @@ const (
 	CAP_AUDIT_READ       = CapValue(C.CAP_AUDIT_READ)
 )
 
+// Equivalent of cap_flag_t
 type CapFlag int
 
 const (
-	CAP_EFFECTIVE   = CapFlag(C.CAP_EFFECTIVE)   /* Specifies the effective flag */
-	CAP_PERMITTED   = CapFlag(C.CAP_PERMITTED)   /* Specifies the permitted flag */
-	CAP_INHERITABLE = CapFlag(C.CAP_INHERITABLE) /* Specifies the inheritable flag */
+	CAP_EFFECTIVE   = CapFlag(C.CAP_EFFECTIVE)
+	CAP_PERMITTED   = CapFlag(C.CAP_PERMITTED)
+	CAP_INHERITABLE = CapFlag(C.CAP_INHERITABLE)
 )
 
+// Equivalent of cap_flag_value_t
 type CapFlagValue int
 
 const (
@@ -73,10 +77,12 @@ const (
 	CAP_SET   = CapFlagValue(C.CAP_SET)
 )
 
+// Wrapping structure for cap_t
 type Cap struct {
 	c C.cap_t
 }
 
+// NewCap() allocates a new Cap structure.
 func NewCap() Cap {
 	c := Cap{
 		C.cap_init(),
@@ -86,6 +92,7 @@ func NewCap() Cap {
 	return c
 }
 
+// create() allocates a new Cap structure using c_cap
 func create(c_cap C.cap_t) *Cap {
 	c := &Cap{c_cap}
 	runtime.SetFinalizer(c, freeCap)
@@ -93,10 +100,25 @@ func create(c_cap C.cap_t) *Cap {
 	return c
 }
 
+// freeCap frees a C.cap_t object using cap_free
 func freeCap(c *Cap) {
 	C.cap_free(unsafe.Pointer(&c.c))
 }
 
+// _err takes a return code and errno as parameters and returns an error if
+// there was an error, else nil
+//
+// Example:
+//   C:
+//     int r = cap_set_fd(fd, c)
+//     if (r < 0) {
+//       return errno
+//     }
+//     return r
+//
+//   Go:
+//     r, err := C.cap_set_fd(fd, c)
+//     return _err(r, err)
 func _err(r C.int, err error) error {
 	if r < 0 {
 		return err
