@@ -51,8 +51,10 @@ func FromName(name string) (CapValue, error) {
 	return CapValue(value), nil
 }
 
-// ToName() converts a capability index value to a string.
-func (value CapValue) ToName() string {
+// Converts a CapValue to a string
+//
+// Equivalent to cap_to_name(cap_value_t)
+func (value CapValue) String() string {
 	var s = C.cap_to_name(C.cap_value_t(value))
 	C.cap_free(unsafe.Pointer(s))
 
